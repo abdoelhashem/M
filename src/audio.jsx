@@ -5,7 +5,8 @@ import axios from 'axios';
 const VoiceRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioFile, setAudioFile] = useState(null);
-  const [publicUrl, setPublicUrl] = useState("");
+  const [publicUrl, setPublicUrl] = useState(false);
+  const [isd, setIsd] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [showUploadOptions, setShowUploadOptions] = useState(false);
 
@@ -49,6 +50,7 @@ const VoiceRecorder = () => {
   };
 
   const uploadToCloudinary = async (blob) => {
+    setIsd(true)
     const formData = new FormData();
     formData.append("file", blob);
     formData.append("upload_preset", "exeeii57");
@@ -59,9 +61,11 @@ const VoiceRecorder = () => {
         formData
       );
       setPublicUrl(response.data.secure_url);
+      setIsd(false)
       setErrorMessage("");
     } catch (error) {
       setErrorMessage("حدث خطأ أثناء رفع الملف. يرجى المحاولة مرة أخرى.");
+      setIsd(false)
     }
   };
 
@@ -106,7 +110,9 @@ const VoiceRecorder = () => {
           <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={handleRetakeRecording} style={{ marginLeft: '10px' }}>تسجيل من جديد</button>
         </div>
       )}
-
+       <div className={`${isd ? "block" : "hidden"}`}>
+       <div className="loader"></div>
+       </div>
       {publicUrl && (
         <div>
           
