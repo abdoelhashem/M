@@ -109,7 +109,7 @@ const VoiceRecorder = ({publicUrl,setPublicUrl}) => {
 
       {showUploadOptions && (
         <div className='flex gap-3' style={{ marginTop: '10px' }}>
-          <button className='py-  py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={handleUploadConfirmation}>رفع الملف</button>
+          <button className='py-  py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={handleUploadConfirmation}>ارسال مع الرساله</button>
           <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={handleRetakeRecording} style={{ marginLeft: '10px' }}>تسجيل من جديد</button>
         </div>
       )}
