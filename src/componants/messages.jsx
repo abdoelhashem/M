@@ -4,7 +4,7 @@ function Messages() {
     const [data,setData] = useState([]);
     const [loader,setLoader] = useState(true);
     useEffect(() => {
-        fetch("http://hdbdbsjzj.fwh.is/messages.json").then(response => response.json()).then(arr => {
+        fetch("https://cors-anywhere.herokuapp.com/https://mrhok.serv00.net/badrphphp/abd5/messages.json").then(response => response.json()).then(arr => {
             const arr1 = arr.filter(w => w.show == "true");
             setData(arr1);
             setLoader(false)
