@@ -63,10 +63,12 @@ const VoiceRecorder = () => {
       setPublicUrl(response.data.secure_url);
 
       setIsd(false)
+      setIsRecording("hid");
       setErrorMessage("");
     } catch (error) {
       setErrorMessage("حدث خطأ أثناء رفع الملف. يرجى المحاولة مرة أخرى.");
       setIsd(false)
+      setIsRecording(false);
     }
   };
 
@@ -86,13 +88,13 @@ const VoiceRecorder = () => {
     <div style={{ textAlign: 'center' }}>
       <h3>تسجيل رسالة صوتية</h3>
 
-      {!isRecording && (
+      {isRecording == false && (
         <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={startRecording}>
           بدء التسجيل
         </button>
       )}
 
-      {isRecording && (
+      {isRecording == true && (
         <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={stopRecording}>
           إيقاف التسجيل
         </button>
