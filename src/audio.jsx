@@ -2,10 +2,10 @@ import React, { useState, useRef } from 'react';
 import RecordRTC from 'recordrtc';
 import axios from 'axios';
 
-const VoiceRecorder = () => {
+const VoiceRecorder = ({publicUrl,setPublicUrl}) => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioFile, setAudioFile] = useState(null);
-  const [publicUrl, setPublicUrl] = useState(false);
+
   const [isd, setIsd] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [showUploadOptions, setShowUploadOptions] = useState(false);
@@ -119,7 +119,7 @@ const VoiceRecorder = () => {
        </div>
       {publicUrl && (
         <div>
-          
+          {publicUrl}
           تم الرفع ارسل رسالتك وسوف يرسل معها
         </div>
       )}
