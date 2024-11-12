@@ -82,13 +82,13 @@ const VoiceRecorder = () => {
       <h3>تسجيل رسالة صوتية</h3>
 
       {!isRecording && (
-        <button onClick={startRecording}>
+        <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={startRecording}>
           بدء التسجيل
         </button>
       )}
 
       {isRecording && (
-        <button onClick={stopRecording}>
+        <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={stopRecording}>
           إيقاف التسجيل
         </button>
       )}
@@ -101,18 +101,16 @@ const VoiceRecorder = () => {
       )}
 
       {showUploadOptions && (
-        <div style={{ marginTop: '10px' }}>
-          <button onClick={handleUploadConfirmation}>رفع الملف</button>
-          <button onClick={handleRetakeRecording} style={{ marginLeft: '10px' }}>تسجيل من جديد</button>
+        <div className='flex gap-3' style={{ marginTop: '10px' }}>
+          <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={handleUploadConfirmation}>رفع الملف</button>
+          <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={handleRetakeRecording} style={{ marginLeft: '10px' }}>تسجيل من جديد</button>
         </div>
       )}
 
       {publicUrl && (
         <div>
-          <h4>رابط عام للملف:</h4>
-          <a href={publicUrl} target="_blank" rel="noopener noreferrer">
-            {publicUrl}
-          </a>
+          
+          تم الرفع ارسل رسالتك وسوف يرسل معها
         </div>
       )}
 
