@@ -61,6 +61,7 @@ const VoiceRecorder = () => {
         formData
       );
       setPublicUrl(response.data.secure_url);
+
       setIsd(false)
       setErrorMessage("");
     } catch (error) {
@@ -106,12 +107,13 @@ const VoiceRecorder = () => {
 
       {showUploadOptions && (
         <div className='flex gap-3' style={{ marginTop: '10px' }}>
-          <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={handleUploadConfirmation}>رفع الملف</button>
+          <button className='py-  py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={handleUploadConfirmation}>رفع الملف</button>
           <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={handleRetakeRecording} style={{ marginLeft: '10px' }}>تسجيل من جديد</button>
         </div>
       )}
-       <div className={`${isd ? "block" : "hidden"}`}>
+       <div className={`${isd ? "flex" : "hidden"} items-center flex-col`}>
        <div className="loader"></div>
+       <div>جار الرفع الرجاء الانتظار...</div>
        </div>
       {publicUrl && (
         <div>
