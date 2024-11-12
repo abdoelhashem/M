@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ReactMic } from 'react-mic';
+import React, { useState, useRef } from 'react';
+import RecordRTC from 'recordrtc';
 import axios from 'axios';
 
 const VoiceRecorder = () => {
@@ -8,6 +8,8 @@ const VoiceRecorder = () => {
   const [publicUrl, setPublicUrl] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [showUploadOptions, setShowUploadOptions] = useState(false);
+
+  const recorderRef = useRef(null);
 
   const checkAudioSupport = () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -21,7 +23,14 @@ const VoiceRecorder = () => {
     if (!checkAudioSupport()) return;
 
     try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recorderRef.current = new RecordRTC(stream, {
+        type: 'audio',
+        mimeType: 'audio/wav',
+        recorderType: RecordRTC.StereoAudioRecorder,
+        desiredSampRate: 16000
+      });
+      recorderRef.current.startRecording();
       setIsRecording(true);
       setErrorMessage("");
       setShowUploadOptions(false);
@@ -30,10 +39,13 @@ const VoiceRecorder = () => {
     }
   };
 
-  const stopRecording = (recordedBlob) => {
-    setIsRecording(false);
-    setAudioFile(recordedBlob.blob);
-    setShowUploadOptions(true);
+  const stopRecording = () => {
+    recorderRef.current.stopRecording(() => {
+      setIsRecording(false);
+      const blob = recorderRef.current.getBlob();
+      setAudioFile(blob);
+      setShowUploadOptions(true);
+    });
   };
 
   const uploadToCloudinary = async (blob) => {
@@ -70,22 +82,13 @@ const VoiceRecorder = () => {
       <h3>تسجيل رسالة صوتية</h3>
 
       {!isRecording && (
-        <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={startRecording}>
+        <button onClick={startRecording}>
           بدء التسجيل
         </button>
       )}
 
-<ReactMic className='w-full'
-        record={isRecording}
-        onStop={stopRecording}
-        mimeType="audio/wav"
-        echoCancellation={true}
-        autoGainControl={true}
-        onError={() => setErrorMessage("حدث خطأ أثناء التسجيل. تأكد من إعدادات المتصفح.")}
-      />
-
       {isRecording && (
-        <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={() => setIsRecording(false)}>
+        <button onClick={stopRecording}>
           إيقاف التسجيل
         </button>
       )}
@@ -99,8 +102,8 @@ const VoiceRecorder = () => {
 
       {showUploadOptions && (
         <div style={{ marginTop: '10px' }}>
-          <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={handleUploadConfirmation}>رفع الملف</button>
-          <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={handleRetakeRecording} style={{ marginLeft: '10px' }}>تسجيل من جديد</button>
+          <button onClick={handleUploadConfirmation}>رفع الملف</button>
+          <button onClick={handleRetakeRecording} style={{ marginLeft: '10px' }}>تسجيل من جديد</button>
         </div>
       )}
 
