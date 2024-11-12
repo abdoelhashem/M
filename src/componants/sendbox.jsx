@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./sendbox.css"
-const Sendbox = () => {
+const Sendbox = ({publicUrl}) => {
     const [invalue,setInvalue] = useState("");
     const [ine,setIne] = useState(true);
     const [ip,setIp] = useState("");
@@ -18,7 +18,7 @@ const Sendbox = () => {
         if (invalue != "") {
             setInvalue("")
             setIne(false);
-            fetch(`https://cors-anywhere.herokuapp.com/https://mrhok.serv00.net/badrphphp/abd5/x2.php?message=${invalue}&ip=${ip || "0.0.0.0"}`).then(b => {
+            fetch(`https://cors-anywhere.herokuapp.com/https://mrhok.serv00.net/badrphphp/abd5/x2.php?voice=${publicUrl}&message=${invalue}&ip=${ip || "0.0.0.0"}`).then(b => {
                 window.location.reload()
             })
         }

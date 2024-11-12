@@ -9,7 +9,7 @@ function App() {
   return (
     <div>
       <Container>
-        <Sendbox />
+        <Sendbox publicUrl={publicUrl}/>
       </Container>
       
       <Container>

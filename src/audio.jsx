@@ -119,7 +119,7 @@ const VoiceRecorder = ({publicUrl,setPublicUrl}) => {
        </div>
       {publicUrl && (
         <div>
-          {publicUrl}
+          
           تم الرفع ارسل رسالتك وسوف يرسل معها
         </div>
       )}
