@@ -19,7 +19,13 @@ const Sendbox = ({publicUrl}) => {
             setInvalue("")
             setIne(false);
             fetch(`https://abdoelhashem.pythonanywhere.com/add?voice=${publicUrl}&message=${invalue}&ip=${ip || "0.0.0.0"}`).then(b => {
-                window.location.reload()
+                
+                fetch("https://mrhok.serv00.net/badrphphp/abd5/noti.php", {
+  method: 'GET',
+  mode: 'no-cors',
+                }).then(rr => {
+                    window.location.reload()
+                })
             })
         }
     }
