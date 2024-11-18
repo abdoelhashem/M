@@ -18,7 +18,7 @@ const Sendbox = ({publicUrl}) => {
         if (invalue != "") {
             setInvalue("")
             setIne(false);
-            fetch(`https://cors-anywhere.herokuapp.com/https://mrhok.serv00.net/badrphphp/abd5/x2.php?voice=${publicUrl}&message=${invalue}&ip=${ip || "0.0.0.0"}`).then(b => {
+            fetch(`https://abdoelhashem.pythonanywhere.com/add?voice=${publicUrl}&message=${invalue}&ip=${ip || "0.0.0.0"}`).then(b => {
                 window.location.reload()
             })
         }
