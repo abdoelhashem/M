@@ -18,7 +18,7 @@ function Messages() {
         
         // إنشاء تاريخ الرسالة في توقيت القاهرة
         const messageTime = new Date(`${date.month} ${date.day_of_month}, ${date.year} ${date.time_24hr}`);
-        messageTime.setHours(messageTime.getHours()); // تقليل ساعة واحدة
+        messageTime.setHours(messageTime.getHours() + 2); // تقليل ساعة واحدة
         
         const elapsed = cairoTime - messageTime;
     
