@@ -11,6 +11,7 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
   const [showUploadOptions, setShowUploadOptions] = useState(false);
 
   const recorderRef = useRef(null);
+  const streamRef = useRef(null); // تخزين تدفق الصوت هنا
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
   const analyserRef = useRef(audioContext.createAnalyser());
   const compressorRef = useRef(audioContext.createDynamicsCompressor());
@@ -19,13 +20,11 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
   const equalizerNode = useRef(audioContext.createBiquadFilter());
   const reverbNode = useRef(audioContext.createConvolver());
 
-  // إعداد الفلاتر والمكونات لتحسين الصوت
   const setupFilters = () => {
     equalizerNode.current.type = 'peaking';
     equalizerNode.current.frequency.setValueAtTime(1000, audioContext.currentTime);
     equalizerNode.current.gain.setValueAtTime(5, audioContext.currentTime);
-
-    reverbNode.current.buffer = null; // هنا يمكن تحميل ملف "Impulse Response"
+    reverbNode.current.buffer = null;
     reverbNode.current.normalize = true;
   };
 
@@ -50,8 +49,15 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
   const startRecording = async () => {
     if (!checkAudioSupport()) return;
 
+    // إذا كان هناك تدفق صوت سابق، قم بإيقافه
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+
     const stream = await requestAudioPermission();
     if (!stream) return;
+
+    streamRef.current = stream; // تخزين التدفق الجديد
 
     try {
       const audioSource = audioContext.createMediaStreamSource(stream);
@@ -131,6 +137,7 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
     setShowUploadOptions(false);
     setPublicUrl("");
     setErrorMessage("");
+    setIsRecording(false); // إعادة تعيين حالة التسجيل
   };
 
   return (
