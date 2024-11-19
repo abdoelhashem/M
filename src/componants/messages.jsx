@@ -66,7 +66,7 @@ function Messages() {
 
     return (
         <div ref={targetSectionRef}>
-        <h1>الرسائل</h1>
+        <h1>الرسائل : {data.length}</h1>
         <div className={`${loader ? "flex" : "hidden"} items-center flex-col`}>
            <div className="loader"></div>
            <h3 className="message-content">جار تحميل الرسائل...</h3>
