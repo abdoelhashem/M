@@ -30,7 +30,7 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
       const source = audioContextRef.current.createMediaStreamSource(stream);
 
-      // تطبيق مرشحات لتحسين الصوت
+      // تحسين الصوت باستخدام مرشحات
       const highPassFilter = audioContextRef.current.createBiquadFilter();
       highPassFilter.type = "highpass";
       highPassFilter.frequency.value = 100; // إزالة الضوضاء منخفضة التردد
@@ -58,10 +58,10 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
 
       recorderRef.current = new RecordRTC(processedStream.stream, {
         type: 'audio',
-        mimeType: 'audio/wav', // صيغة عالية الجودة
+        mimeType: 'audio/webm', // تنسيق WebM بدلاً من WAV
         recorderType: RecordRTC.StereoAudioRecorder,
         desiredSampRate: 44100, // تحسين معدل أخذ العينات
-        numberOfAudioChannels: 1, // قناة صوتية واحدة
+        numberOfAudioChannels: 1, // قناة صوتية واحدة (مونوريل)
       });
 
       recorderRef.current.startRecording();
@@ -75,27 +75,27 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
   };
 
   const stopRecording = () => {
-  recorderRef.current.stopRecording(() => {
-    setIsRecording(false);
-    const blob = recorderRef.current.getBlob();
-    setAudioFile(blob);
-    setShowUploadOptions(true);
+    recorderRef.current.stopRecording(() => {
+      setIsRecording(false);
+      const blob = recorderRef.current.getBlob();
+      setAudioFile(blob);
+      setShowUploadOptions(true);
 
-    // إيقاف الميكروفون بشكل صحيح
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((track) => {
-        track.stop(); // إيقاف التراكات
-      });
-      mediaStreamRef.current = null; // تفريغ المرجع
-    }
+      // إيقاف الميكروفون بشكل صحيح
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => {
+          track.stop(); // إيقاف التراكات
+        });
+        mediaStreamRef.current = null; // تفريغ المرجع
+      }
 
-    // إيقاف AudioContext
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null; // تفريغ المرجع
-    }
-  });
-};
+      // إيقاف AudioContext
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null; // تفريغ المرجع
+      }
+    });
+  };
 
   const uploadToCloudinary = async (blob) => {
     if (!blob) {
