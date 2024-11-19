@@ -9,11 +9,10 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
   const [isd, setIsd] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [showUploadOptions, setShowUploadOptions] = useState(false);
-  
+
   const recorderRef = useRef(null);
-  const audioContextRef = useRef(null);
-  const analyserRef = useRef(null);
-  const gainNodeRef = useRef(null);
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const analyserRef = useRef(audioContext.createAnalyser());
 
   const checkAudioSupport = () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -23,30 +22,27 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
     return true;
   };
 
-  // إضافة معالجة صوتية باستخدام Web Audio API
-  const setupAudioProcessing = (stream) => {
-    audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    const source = audioContextRef.current.createMediaStreamSource(stream);
-    analyserRef.current = audioContextRef.current.createAnalyser();
-    gainNodeRef.current = audioContextRef.current.createGain();
-    source.connect(analyserRef.current);
-    analyserRef.current.connect(gainNodeRef.current);
-    gainNodeRef.current.connect(audioContextRef.current.destination);
-  };
-
   const startRecording = async () => {
     if (!checkAudioSupport()) return;
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      setupAudioProcessing(stream);
+      const audioSource = audioContext.createMediaStreamSource(stream);
+      const noiseFilter = audioContext.createBiquadFilter();
+      noiseFilter.type = 'lowpass'; // تصفية الترددات العالية أو الضوضاء
+
+      // توصيل المصدر بالفلاتر
+      audioSource.connect(noiseFilter);
+      noiseFilter.connect(analyserRef.current);
+      analyserRef.current.connect(audioContext.destination);
 
       recorderRef.current = new RecordRTC(stream, {
         type: 'audio',
         mimeType: 'audio/wav',
         recorderType: RecordRTC.StereoAudioRecorder,
-        desiredSampRate: 44100, // زيادة جودة التسجيل
+        desiredSampRate: 16000
       });
+
       recorderRef.current.startRecording();
       setIsRecording(true);
       setErrorMessage("");
@@ -57,33 +53,12 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
   };
 
   const stopRecording = () => {
-    recorderRef.current.stopRecording(async () => {
+    recorderRef.current.stopRecording(() => {
       setIsRecording(false);
       const blob = recorderRef.current.getBlob();
-      const audioUrl = URL.createObjectURL(blob);
-
-      // تطبيق تقنيات تحسين الصوت بعد التسجيل
-      const improvedAudio = await applyAudioEnhancements(audioUrl);
-      setAudioFile(improvedAudio);
+      setAudioFile(blob);
       setShowUploadOptions(true);
     });
-  };
-
-  // استخدام Web Audio API لتصفية الصوت
-  const applyAudioEnhancements = async (audioUrl) => {
-    const response = await fetch(audioUrl);
-    const audioData = await response.arrayBuffer();
-
-    // فك تشفير الصوت
-    const audioBuffer = await audioContextRef.current.decodeAudioData(audioData);
-    
-    // معالجة الصوت (على سبيل المثال: تحسين الصوت / إزالة الضوضاء)
-    const filteredBuffer = audioContextRef.current.createBuffer(audioBuffer.numberOfChannels, audioBuffer.length, audioBuffer.sampleRate);
-
-    // تطبيق تحسينات الصوت (مثل استخدام خوارزميات لتصفية الضوضاء هنا)
-
-    // العودة إلى الصوت المحسن
-    return new Blob([filteredBuffer], { type: 'audio/wav' });
   };
 
   const uploadToCloudinary = async (blob) => {
@@ -93,7 +68,10 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
     formData.append("upload_preset", "exeeii57");
 
     try {
-      const response = await axios.post("https://api.cloudinary.com/v1_1/dmocyqnng/upload", formData);
+      const response = await axios.post(
+        "https://api.cloudinary.com/v1_1/dmocyqnng/upload",
+        formData
+      );
       setPublicUrl(response.data.secure_url);
       setIsd(false);
       setIsRecording("hid");
@@ -121,14 +99,14 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
     <div style={{ textAlign: 'center' }}>
       <h3>تسجيل رسالة صوتية</h3>
 
-      {isRecording == false && (
-        <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={startRecording}>
+      {isRecording === false && (
+        <button className="py-2 text-white px-6 bg-cyan-600 rounded-md" onClick={startRecording}>
           بدء التسجيل
         </button>
       )}
 
-      {isRecording == true && (
-        <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={stopRecording}>
+      {isRecording === true && (
+        <button className="py-2 text-white px-6 bg-cyan-600 rounded-md" onClick={stopRecording}>
           إيقاف التسجيل
         </button>
       )}
@@ -141,9 +119,9 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
       )}
 
       {showUploadOptions && (
-        <div className='flex gap-3' style={{ marginTop: '10px' }}>
-          <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={handleUploadConfirmation}>ارسال مع الرساله</button>
-          <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={handleRetakeRecording} style={{ marginLeft: '10px' }}>تسجيل من جديد</button>
+        <div className="flex gap-3" style={{ marginTop: '10px' }}>
+          <button className="py-2 text-white px-6 bg-cyan-600 rounded-md" onClick={handleUploadConfirmation}>ارسال مع الرساله</button>
+          <button className="py-2 text-white px-6 bg-cyan-600 rounded-md" onClick={handleRetakeRecording} style={{ marginLeft: '10px' }}>تسجيل من جديد</button>
         </div>
       )}
 
