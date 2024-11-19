@@ -11,7 +11,7 @@ const Sendbox = ({publicUrl}) => {
         .then(data => setIp(data.ip))
         .catch(error => console.error("حدث خطأ:", error));
 
-        fetch('https://abdoelhashem.pythonanywhere.com/views')
+        fetch('https://abdoelhashem.pythonanywhere.com/increment_view')
         .then(response => response.json())
         .then(data => setVist(data.view))
         .catch(error => console.error("حدث خطأ:", error));
