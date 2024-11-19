@@ -11,25 +11,6 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
   const [showUploadOptions, setShowUploadOptions] = useState(false);
 
   const recorderRef = useRef(null);
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  const analyserRef = useRef(audioContext.createAnalyser());
-  const compressorRef = useRef(audioContext.createDynamicsCompressor());
-  const gainNode = useRef(audioContext.createGain());
-  const noiseReductionNode = useRef(audioContext.createGain());
-  const equalizerNode = useRef(audioContext.createBiquadFilter()); // Equalizer filter
-  const reverbNode = useRef(audioContext.createConvolver()); // Reverb reduction node
-
-  // إعداد الفلاتر والمكونات لتحسين الصوت
-  const setupFilters = () => {
-    // إعدادات Equalizer (تعديل الترددات المنخفضة والعالية)
-    equalizerNode.current.type = 'peaking';
-    equalizerNode.current.frequency.setValueAtTime(1000, audioContext.currentTime); // تغيير التردد حسب الحاجة
-    equalizerNode.current.gain.setValueAtTime(5, audioContext.currentTime); // تعزيز الترددات
-
-    // إعدادات Reverb
-    reverbNode.current.buffer = null; // هنا يمكن تحميل ملف "Impulse Response" لتحسين الصدى
-    reverbNode.current.normalize = true;
-  };
 
   const checkAudioSupport = () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -43,40 +24,20 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
     if (!checkAudioSupport()) return;
 
     try {
+      // التأكد من أنه يتم إعادة تعيين `recorderRef` في كل مرة
+      if (recorderRef.current) {
+        recorderRef.current.destroy();
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // إنشاء مصدر الصوت
-      const audioSource = audioContext.createMediaStreamSource(stream);
-
-      // إعدادات Dynamic Range Compression
-      compressorRef.current.threshold.setValueAtTime(-50, audioContext.currentTime);
-      compressorRef.current.knee.setValueAtTime(40, audioContext.currentTime);
-      compressorRef.current.ratio.setValueAtTime(12, audioContext.currentTime);
-      compressorRef.current.attack.setValueAtTime(0, audioContext.currentTime);
-      compressorRef.current.release.setValueAtTime(0.25, audioContext.currentTime);
-
-      // تقليل الضوضاء
-      noiseReductionNode.current.gain.setValueAtTime(0.5, audioContext.currentTime);
-
-      // تحسين مستوى الصوت العام
-      gainNode.current.gain.setValueAtTime(1, audioContext.currentTime); // تعزيز الصوت إذا لزم الأمر
-
-      // ربط الفلاتر والمكونات
-      audioSource.connect(noiseReductionNode.current);
-      noiseReductionNode.current.connect(equalizerNode.current);
-      equalizerNode.current.connect(reverbNode.current); // إضافة تأثير الصدى
-      reverbNode.current.connect(compressorRef.current);
-      compressorRef.current.connect(gainNode.current);
-      gainNode.current.connect(analyserRef.current);
-      analyserRef.current.connect(audioContext.destination);
 
       recorderRef.current = new RecordRTC(stream, {
         type: 'audio',
-        mimeType: 'audio/webm',
+        mimeType: 'audio/wav',
         recorderType: RecordRTC.StereoAudioRecorder,
         desiredSampRate: 16000
       });
-
+      
       recorderRef.current.startRecording();
       setIsRecording(true);
       setErrorMessage("");
@@ -134,13 +95,13 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
       <h3>تسجيل رسالة صوتية</h3>
 
       {isRecording === false && (
-        <button className="py-2 text-white px-6 bg-cyan-600 rounded-md" onClick={startRecording}>
+        <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={startRecording}>
           بدء التسجيل
         </button>
       )}
 
       {isRecording === true && (
-        <button className="py-2 text-white px-6 bg-cyan-600 rounded-md" onClick={stopRecording}>
+        <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={stopRecording}>
           إيقاف التسجيل
         </button>
       )}
@@ -153,9 +114,13 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
       )}
 
       {showUploadOptions && (
-        <div className="flex gap-3" style={{ marginTop: '10px' }}>
-          <button className="py-2 text-white px-6 bg-cyan-600 rounded-md" onClick={handleUploadConfirmation}>ارسال مع الرساله</button>
-          <button className="py-2 text-white px-6 bg-cyan-600 rounded-md" onClick={handleRetakeRecording} style={{ marginLeft: '10px' }}>تسجيل من جديد</button>
+        <div className='flex gap-3' style={{ marginTop: '10px' }}>
+          <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={handleUploadConfirmation}>
+            ارسال مع الرساله
+          </button>
+          <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={handleRetakeRecording} style={{ marginLeft: '10px' }}>
+            تسجيل من جديد
+          </button>
         </div>
       )}
 
