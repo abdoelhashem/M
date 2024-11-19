@@ -72,7 +72,7 @@ function Messages() {
            <div className="loader"></div>
            <h3 className="message-content">جار تحميل الرسائل...</h3>
         </div>
-            {data.length == 0 && <h3 className={`${loader ? "" : "hidden"} text-center `}>لم يظهر Abdo Ahmed رسائل حتي الان</h3>}
+            {data.length == 0 && <h3 className={`${loader ? "hidden" : ""} text-center `}>لم يظهر Abdo Ahmed رسائل حتي الان</h3>}
         {data.length != 0 && data.map((x,i) => (
             <div className="message-box" key={i}>
                 <div className="message-footer">
