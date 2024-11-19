@@ -14,6 +14,22 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
   const audioContext = new (window.AudioContext || window.webkitAudioContext)();
   const analyserRef = useRef(audioContext.createAnalyser());
   const compressorRef = useRef(audioContext.createDynamicsCompressor());
+  const gainNode = useRef(audioContext.createGain());
+  const noiseReductionNode = useRef(audioContext.createGain());
+  const equalizerNode = useRef(audioContext.createBiquadFilter()); // Equalizer filter
+  const reverbNode = useRef(audioContext.createConvolver()); // Reverb reduction node
+
+  // إعداد الفلاتر والمكونات لتحسين الصوت
+  const setupFilters = () => {
+    // إعدادات Equalizer (تعديل الترددات المنخفضة والعالية)
+    equalizerNode.current.type = 'peaking';
+    equalizerNode.current.frequency.setValueAtTime(1000, audioContext.currentTime); // تغيير التردد حسب الحاجة
+    equalizerNode.current.gain.setValueAtTime(5, audioContext.currentTime); // تعزيز الترددات
+
+    // إعدادات Reverb
+    reverbNode.current.buffer = null; // هنا يمكن تحميل ملف "Impulse Response" لتحسين الصدى
+    reverbNode.current.normalize = true;
+  };
 
   const checkAudioSupport = () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -28,38 +44,35 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      
+
       // إنشاء مصدر الصوت
       const audioSource = audioContext.createMediaStreamSource(stream);
 
-      // فلتر لخفض الترددات العالية أو الضوضاء
-      const noiseFilter = audioContext.createBiquadFilter();
-      noiseFilter.type = 'lowpass'; // تصفية الترددات العالية أو الضوضاء
-      noiseFilter.frequency.setValueAtTime(2000, audioContext.currentTime);
-
-      // استخدام Equalizer لتعديل الترددات
-      const equalizer = audioContext.createBiquadFilter();
-      equalizer.type = 'peaking';  // تعديل الترددات بشكل متوازن
-      equalizer.frequency.setValueAtTime(1000, audioContext.currentTime);
-      equalizer.gain.setValueAtTime(10, audioContext.currentTime);  // رفع تردد 1kHz
-
-      // إضافة ضاغط الصوت (Compressor) للتحكم في الديناميكية
+      // إعدادات Dynamic Range Compression
       compressorRef.current.threshold.setValueAtTime(-50, audioContext.currentTime);
       compressorRef.current.knee.setValueAtTime(40, audioContext.currentTime);
       compressorRef.current.ratio.setValueAtTime(12, audioContext.currentTime);
       compressorRef.current.attack.setValueAtTime(0, audioContext.currentTime);
       compressorRef.current.release.setValueAtTime(0.25, audioContext.currentTime);
 
-      // ربط الفلاتر بالصوت
-      audioSource.connect(noiseFilter);
-      noiseFilter.connect(equalizer);
-      equalizer.connect(compressorRef.current);
-      compressorRef.current.connect(analyserRef.current);
+      // تقليل الضوضاء
+      noiseReductionNode.current.gain.setValueAtTime(0.5, audioContext.currentTime);
+
+      // تحسين مستوى الصوت العام
+      gainNode.current.gain.setValueAtTime(1, audioContext.currentTime); // تعزيز الصوت إذا لزم الأمر
+
+      // ربط الفلاتر والمكونات
+      audioSource.connect(noiseReductionNode.current);
+      noiseReductionNode.current.connect(equalizerNode.current);
+      equalizerNode.current.connect(reverbNode.current); // إضافة تأثير الصدى
+      reverbNode.current.connect(compressorRef.current);
+      compressorRef.current.connect(gainNode.current);
+      gainNode.current.connect(analyserRef.current);
       analyserRef.current.connect(audioContext.destination);
 
       recorderRef.current = new RecordRTC(stream, {
         type: 'audio',
-        mimeType: 'audio/wav',
+        mimeType: 'audio/webm',
         recorderType: RecordRTC.StereoAudioRecorder,
         desiredSampRate: 16000
       });
