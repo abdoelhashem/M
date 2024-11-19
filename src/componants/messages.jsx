@@ -66,12 +66,12 @@ function Messages() {
 
     return (
         <div ref={targetSectionRef}>
-        <h1>الرسائل </h1> <div className="message-footer">عدد الرسائل : {data.length}</div>
+        <h1>الرسائل </h1> <div className="message-footer p-2">عدد الرسائل : {data.length}</div>
         <div className={`${loader ? "flex" : "hidden"} items-center flex-col`}>
            <div className="loader"></div>
            <h3 className="message-content">جار تحميل الرسائل...</h3>
         </div>
-            {data.length == 0 && <h3 className="">لم يظهر Abdo Ahmed رسائل حتي الان</h3>}
+            {data.length == 0 && <h3 className="text-center">لم يظهر Abdo Ahmed رسائل حتي الان</h3>}
         {data.length != 0 && data.map((x,i) => (
             <div className="message-box" key={i}>
                 <div className="message-footer">
