@@ -66,12 +66,12 @@ function Messages() {
 
     return (
         <div ref={targetSectionRef}>
-        <h1>الرسائل : {data.length}</h1>
+        <h1>الرسائل </h1> <div className="message-footer">{data.length}</div>
         <div className={`${loader ? "flex" : "hidden"} items-center flex-col`}>
            <div className="loader"></div>
            <h3 className="message-content">جار تحميل الرسائل...</h3>
         </div>
-        {data.map((x,i) => (
+        {data.length != 0 && data.map((x,i) => (
             <div className="message-box" key={i}>
                 <div className="message-footer">
                 <span>{timeAgo(x.date)}</span>
