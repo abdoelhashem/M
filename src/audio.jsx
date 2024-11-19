@@ -110,6 +110,12 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null; // إعادة تعيين التدفق
     }
+
+    // إيقاف RecordRTC بشكل كامل
+    if (recorderRef.current) {
+      recorderRef.current.destroy();
+      recorderRef.current = null; // إعادة تعيين recorder
+    }
   };
 
   const uploadToCloudinary = async (blob) => {
@@ -149,6 +155,12 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
+    }
+
+    // إعادة تهيئة RecordRTC
+    if (recorderRef.current) {
+      recorderRef.current.destroy();
+      recorderRef.current = null;
     }
   };
 
