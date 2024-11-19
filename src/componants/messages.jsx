@@ -1,8 +1,17 @@
 import "./messages.css";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 function Messages() {
     const [data,setData] = useState([]);
     const [loader,setLoader] = useState(true);
+    const targetSectionRef = useRef(null);
+
+  useEffect(() => {
+    // التمرير إلى القسم المحدد عند تحميل الصفحة
+    if (targetSectionRef.current) {
+      targetSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []); // سيتم تنفيذ هذا التأثير عند تحميل الصفحة فقط
+
     useEffect(() => {
         fetch("https://abdoelhashem.pythonanywhere.com/messages").then(response => response.json()).then(arr => {
             const arr1 = arr.filter(w => w.show == "true");
@@ -51,7 +60,7 @@ function Messages() {
 
 
     return (
-        <div>
+        <div ref={targetSectionRef}>
         <h1>الرسائل</h1>
         <div className={`${loader ? "flex" : "hidden"} items-center flex-col`}>
            <div className="loader"></div>
