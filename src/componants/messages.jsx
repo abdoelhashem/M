@@ -1,4 +1,5 @@
 import "./messages.css";
+import AudioPlayer from './AudioPlayer';
 import { useEffect, useState, useRef } from "react";
 function Messages() {
     const [data,setData] = useState([]);
@@ -80,7 +81,7 @@ function Messages() {
             <div className="message-box" >
             <p className="">{x.message}</p>
             </div>
-            {x.voice == "false" ? "" : <><audio className="w-full" controls src={x.voice}></audio></>}
+            {x.voice == "false" ? "" : <><AudioPlayer src={x.voice}/></>}
             {x.reply == "" ? "" : <><div className="message-footer">
                     الرد :
                 </div><div className="message-box">
