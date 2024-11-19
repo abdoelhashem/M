@@ -6,11 +6,28 @@ import AudioPlayer from './componants/AudioPlayer';
 const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioFile, setAudioFile] = useState(null);
-  const [isd, setIsd] = useState("");
+  const [isd, setIsd] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [showUploadOptions, setShowUploadOptions] = useState(false);
 
   const recorderRef = useRef(null);
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const analyserRef = useRef(audioContext.createAnalyser());
+  const compressorRef = useRef(audioContext.createDynamicsCompressor());
+  const gainNode = useRef(audioContext.createGain());
+  const noiseReductionNode = useRef(audioContext.createGain());
+  const equalizerNode = useRef(audioContext.createBiquadFilter());
+  const reverbNode = useRef(audioContext.createConvolver());
+
+  // إعداد الفلاتر والمكونات لتحسين الصوت
+  const setupFilters = () => {
+    equalizerNode.current.type = 'peaking';
+    equalizerNode.current.frequency.setValueAtTime(1000, audioContext.currentTime);
+    equalizerNode.current.gain.setValueAtTime(5, audioContext.currentTime);
+
+    reverbNode.current.buffer = null; // هنا يمكن تحميل ملف "Impulse Response"
+    reverbNode.current.normalize = true;
+  };
 
   const checkAudioSupport = () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -20,30 +37,56 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
     return true;
   };
 
+  const requestAudioPermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      return stream;
+    } catch (err) {
+      setErrorMessage("لم يتم منح إذن التسجيل الصوتي.");
+      return null;
+    }
+  };
+
   const startRecording = async () => {
     if (!checkAudioSupport()) return;
 
-    try {
-      // التأكد من أنه يتم إعادة تعيين `recorderRef` في كل مرة
-      if (recorderRef.current) {
-        recorderRef.current.destroy();
-      }
+    const stream = await requestAudioPermission();
+    if (!stream) return;
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    try {
+      const audioSource = audioContext.createMediaStreamSource(stream);
+      setupFilters();
+
+      compressorRef.current.threshold.setValueAtTime(-50, audioContext.currentTime);
+      compressorRef.current.knee.setValueAtTime(40, audioContext.currentTime);
+      compressorRef.current.ratio.setValueAtTime(12, audioContext.currentTime);
+      compressorRef.current.attack.setValueAtTime(0, audioContext.currentTime);
+      compressorRef.current.release.setValueAtTime(0.25, audioContext.currentTime);
+
+      noiseReductionNode.current.gain.setValueAtTime(0.5, audioContext.currentTime);
+      gainNode.current.gain.setValueAtTime(1, audioContext.currentTime);
+
+      audioSource.connect(noiseReductionNode.current);
+      noiseReductionNode.current.connect(equalizerNode.current);
+      equalizerNode.current.connect(reverbNode.current);
+      reverbNode.current.connect(compressorRef.current);
+      compressorRef.current.connect(gainNode.current);
+      gainNode.current.connect(analyserRef.current);
+      analyserRef.current.connect(audioContext.destination);
 
       recorderRef.current = new RecordRTC(stream, {
         type: 'audio',
-        mimeType: 'audio/wav',
+        mimeType: 'audio/webm',
         recorderType: RecordRTC.StereoAudioRecorder,
         desiredSampRate: 16000
       });
-      
+
       recorderRef.current.startRecording();
       setIsRecording(true);
       setErrorMessage("");
       setShowUploadOptions(false);
     } catch (error) {
-      setErrorMessage("لم يتم منح إذن التسجيل الصوتي.");
+      setErrorMessage("حدث خطأ أثناء بدء التسجيل.");
     }
   };
 
@@ -95,13 +138,13 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
       <h3>تسجيل رسالة صوتية</h3>
 
       {isRecording === false && (
-        <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={startRecording}>
+        <button className="py-2 text-white px-6 bg-cyan-600 rounded-md" onClick={startRecording}>
           بدء التسجيل
         </button>
       )}
 
       {isRecording === true && (
-        <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={stopRecording}>
+        <button className="py-2 text-white px-6 bg-cyan-600 rounded-md" onClick={stopRecording}>
           إيقاف التسجيل
         </button>
       )}
@@ -114,13 +157,9 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
       )}
 
       {showUploadOptions && (
-        <div className='flex gap-3' style={{ marginTop: '10px' }}>
-          <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={handleUploadConfirmation}>
-            ارسال مع الرساله
-          </button>
-          <button className='py-2 text-white px-6 bg-cyan-600 rounded-md' onClick={handleRetakeRecording} style={{ marginLeft: '10px' }}>
-            تسجيل من جديد
-          </button>
+        <div className="flex gap-3" style={{ marginTop: '10px' }}>
+          <button className="py-2 text-white px-6 bg-cyan-600 rounded-md" onClick={handleUploadConfirmation}>ارسال مع الرساله</button>
+          <button className="py-2 text-white px-6 bg-cyan-600 rounded-md" onClick={handleRetakeRecording} style={{ marginLeft: '10px' }}>تسجيل من جديد</button>
         </div>
       )}
 
