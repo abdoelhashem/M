@@ -11,7 +11,7 @@ function Messages() {
       if (targetSectionRef.current) {
         targetSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-    }, 2000); // 2000 ميلي ثانية = 2 ثانية
+    }, 1500); // 2000 ميلي ثانية = 2 ثانية
 
     // تنظيف التايمر إذا تم إلغاء المكون أو تغييره
     return () => clearTimeout(timer);
