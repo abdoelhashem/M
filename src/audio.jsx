@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
+import RecordRTC from 'recordrtc';
 import axios from 'axios';
 import AudioPlayer from './componants/AudioPlayer';
 
@@ -10,8 +11,6 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
   const [showUploadOptions, setShowUploadOptions] = useState(false);
 
   const recorderRef = useRef(null);
-  const audioContextRef = useRef(null);
-  const mediaStreamSourceRef = useRef(null);
 
   const checkAudioSupport = () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -26,81 +25,29 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // إنشاء AudioContext لتحسين الصوت
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-      mediaStreamSourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
-
-      // تطبيق مرشحات لتحسين الصوت
-      const highPassFilter = audioContextRef.current.createBiquadFilter();
-      highPassFilter.type = "highpass";
-      highPassFilter.frequency.value = 100; // إزالة الضوضاء منخفضة التردد
-
-      const lowPassFilter = audioContextRef.current.createBiquadFilter();
-      lowPassFilter.type = "lowpass";
-      lowPassFilter.frequency.value = 8000; // إزالة الضوضاء عالية التردد
-
-      const compressor = audioContextRef.current.createDynamicsCompressor();
-      compressor.threshold.setValueAtTime(-30, audioContextRef.current.currentTime);
-      compressor.knee.setValueAtTime(40, audioContextRef.current.currentTime);
-      compressor.ratio.setValueAtTime(12, audioContextRef.current.currentTime);
-      compressor.attack.setValueAtTime(0.003, audioContextRef.current.currentTime);
-      compressor.release.setValueAtTime(0.25, audioContextRef.current.currentTime);
-
-      // توصيل المرشحات
-      mediaStreamSourceRef.current
-        .connect(highPassFilter)
-        .connect(lowPassFilter)
-        .connect(compressor)
-        .connect(audioContextRef.current.destination);
-
-      // إعداد التسجيل
-      const options = {
-        mimeType: 'audio/webm', // صيغة مضغوطة بجودة عالية
-        audioBitsPerSecond: 128000, // معدل البت الصوتي
-      };
-      recorderRef.current = new MediaRecorder(stream, options);
-
-      const chunks = [];
-      recorderRef.current.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          chunks.push(event.data);
-        }
-      };
-
-      recorderRef.current.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' });
-        setAudioFile(blob);
-        setShowUploadOptions(true);
-      };
-
-      recorderRef.current.start();
+      recorderRef.current = new RecordRTC(stream, {
+        type: 'audio',
+        mimeType: 'audio/wav', // صيغة عالية الجودة
+        recorderType: RecordRTC.StereoAudioRecorder,
+        desiredSampRate: 44100, // تحسين معدل أخذ العينات
+        numberOfAudioChannels: 1, // قناة صوتية واحدة
+      });
+      recorderRef.current.startRecording();
       setIsRecording(true);
       setErrorMessage("");
+      setShowUploadOptions(false);
     } catch (error) {
       setErrorMessage("لم يتم منح إذن التسجيل الصوتي.");
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-        audioContextRef.current = null;
-      }
     }
   };
 
   const stopRecording = () => {
-    if (recorderRef.current) {
-      recorderRef.current.stop();
-    }
-    setIsRecording(false);
-
-    // تنظيف الموارد
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-    if (mediaStreamSourceRef.current) {
-      mediaStreamSourceRef.current.disconnect();
-      mediaStreamSourceRef.current = null;
-    }
+    recorderRef.current.stopRecording(() => {
+      setIsRecording(false);
+      const blob = recorderRef.current.getBlob();
+      setAudioFile(blob);
+      setShowUploadOptions(true);
+    });
   };
 
   const uploadToCloudinary = async (blob) => {
@@ -140,37 +87,18 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
     setErrorMessage("");
   };
 
-  // تنظيف الموارد عند إلغاء المكون
-  useEffect(() => {
-    return () => {
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-      if (recorderRef.current) {
-        recorderRef.current = null;
-      }
-    };
-  }, []);
-
   return (
     <div style={{ textAlign: 'center' }}>
       <h3>تسجيل رسالة صوتية</h3>
 
       {!isRecording && (
-        <button
-          className="py-2 text-white px-6 bg-cyan-600 rounded-md"
-          onClick={startRecording}
-          disabled={isUploading}
-        >
+        <button className="py-2 text-white px-6 bg-cyan-600 rounded-md" onClick={startRecording}>
           بدء التسجيل
         </button>
       )}
 
       {isRecording && (
-        <button
-          className="py-2 text-white px-6 bg-cyan-600 rounded-md"
-          onClick={stopRecording}
-        >
+        <button className="py-2 text-white px-6 bg-cyan-600 rounded-md" onClick={stopRecording}>
           إيقاف التسجيل
         </button>
       )}
@@ -194,7 +122,6 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
           <button
             className="py-2 text-white px-6 bg-cyan-600 rounded-md"
             onClick={handleRetakeRecording}
-            style={{ marginLeft: '10px' }}
           >
             تسجيل من جديد
           </button>
@@ -208,13 +135,9 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
         </div>
       )}
 
-      {publicUrl && <div>تم الرفع ارسل رسالتك وسوف يرسل معها</div>}
+      {publicUrl && <div>تم الرفع، يمكنك الآن إرسال الرسالة.</div>}
 
-      {errorMessage && (
-        <div style={{ color: 'red', marginTop: '10px' }}>
-          {errorMessage}
-        </div>
-      )}
+      {errorMessage && <div style={{ color: 'red', marginTop: '10px' }}>{errorMessage}</div>}
     </div>
   );
 };
