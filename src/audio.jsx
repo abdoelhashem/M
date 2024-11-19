@@ -11,6 +11,8 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
   const [showUploadOptions, setShowUploadOptions] = useState(false);
 
   const recorderRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const mediaStreamRef = useRef(null);
 
   const checkAudioSupport = () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -25,14 +27,45 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      recorderRef.current = new RecordRTC(stream, {
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+
+      // تطبيق مرشحات لتحسين الصوت
+      const highPassFilter = audioContextRef.current.createBiquadFilter();
+      highPassFilter.type = "highpass";
+      highPassFilter.frequency.value = 100; // إزالة الضوضاء منخفضة التردد
+
+      const lowPassFilter = audioContextRef.current.createBiquadFilter();
+      lowPassFilter.type = "lowpass";
+      lowPassFilter.frequency.value = 8000; // إزالة الضوضاء عالية التردد
+
+      const compressor = audioContextRef.current.createDynamicsCompressor();
+      compressor.threshold.setValueAtTime(-50, audioContextRef.current.currentTime);
+      compressor.knee.setValueAtTime(40, audioContextRef.current.currentTime);
+      compressor.ratio.setValueAtTime(12, audioContextRef.current.currentTime);
+      compressor.attack.setValueAtTime(0.003, audioContextRef.current.currentTime);
+      compressor.release.setValueAtTime(0.25, audioContextRef.current.currentTime);
+
+      // ربط المرشحات بالتسلسل
+      source
+        .connect(highPassFilter)
+        .connect(lowPassFilter)
+        .connect(compressor);
+
+      // تمرير الصوت المعالج إلى RecordRTC
+      const processedStream = audioContextRef.current.createMediaStreamDestination();
+      compressor.connect(processedStream);
+
+      recorderRef.current = new RecordRTC(processedStream.stream, {
         type: 'audio',
         mimeType: 'audio/wav', // صيغة عالية الجودة
         recorderType: RecordRTC.StereoAudioRecorder,
         desiredSampRate: 44100, // تحسين معدل أخذ العينات
         numberOfAudioChannels: 1, // قناة صوتية واحدة
       });
+
       recorderRef.current.startRecording();
+      mediaStreamRef.current = stream; // حفظ المرجع لوقف الميكروفون لاحقًا
       setIsRecording(true);
       setErrorMessage("");
       setShowUploadOptions(false);
@@ -42,13 +75,27 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
   };
 
   const stopRecording = () => {
-    recorderRef.current.stopRecording(() => {
-      setIsRecording(false);
-      const blob = recorderRef.current.getBlob();
-      setAudioFile(blob);
-      setShowUploadOptions(true);
-    });
-  };
+  recorderRef.current.stopRecording(() => {
+    setIsRecording(false);
+    const blob = recorderRef.current.getBlob();
+    setAudioFile(blob);
+    setShowUploadOptions(true);
+
+    // إيقاف الميكروفون بشكل صحيح
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => {
+        track.stop(); // إيقاف التراكات
+      });
+      mediaStreamRef.current = null; // تفريغ المرجع
+    }
+
+    // إيقاف AudioContext
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null; // تفريغ المرجع
+    }
+  });
+};
 
   const uploadToCloudinary = async (blob) => {
     if (!blob) {
