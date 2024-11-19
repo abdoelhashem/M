@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import AudioPlayer from './components/AudioPlayer';
+import AudioPlayer from './componants/AudioPlayer';
 
 const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
   const [isRecording, setIsRecording] = useState(false);
