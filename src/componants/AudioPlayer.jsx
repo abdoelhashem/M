@@ -6,18 +6,16 @@ const AudioPlayer = ({ src }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
 
   // رسم الموجة الصوتية
   const drawWaveform = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
 
-    // إعدادات الرسم
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#C4C4C4";
+    ctx.fillStyle = "#ccc";
 
-    // رسم موجات وهمية (يمكن استبدالها ببيانات فعلية إذا توفرت)
+    // رسم الموجة الصوتية (محاكاة بموجة عشوائية)
     const width = canvas.width;
     const height = canvas.height;
     const waveHeight = height / 2;
@@ -26,11 +24,16 @@ const AudioPlayer = ({ src }) => {
       const barHeight = Math.random() * waveHeight;
       ctx.fillRect(i, waveHeight - barHeight / 2, 2, barHeight);
     }
+
+    // شريط التقدم
+    ctx.fillStyle = "#3b82f6"; // لون الشريط المتقدم
+    const progressWidth = (currentTime / duration) * width || 0;
+    ctx.fillRect(0, 0, progressWidth, height);
   };
 
   useEffect(() => {
     drawWaveform();
-  }, []);
+  }, [currentTime, duration]);
 
   const togglePlay = () => {
     if (isPlaying) {
@@ -49,70 +52,48 @@ const AudioPlayer = ({ src }) => {
     setDuration(audioRef.current.duration);
   };
 
-  const handleVolumeChange = (e) => {
-    const newVolume = e.target.value;
-    setVolume(newVolume);
-    audioRef.current.volume = newVolume;
-  };
-
   return (
-    <div className="p-4 bg-yellow-50 rounded-lg shadow-lg flex flex-col items-center space-y-4">
-      {/* موجة الصوت */}
-      <div className="relative w-full h-16">
-        <canvas
-          ref={canvasRef}
-          width="500"
-          height="64"
-          className="w-full h-full"
-        ></canvas>
-        <div
-          className="absolute top-0 left-0 h-full bg-gray-900 bg-opacity-20"
-          style={{
-            width: `${(currentTime / duration) * 100 || 0}%`,
-          }}
-        ></div>
+    <div className="flex items-center space-x-4 bg-white rounded-full shadow-lg p-3 w-full max-w-md">
+      {/* زر التشغيل */}
+      <button onClick={togglePlay} className="text-gray-600">
+        {isPlaying ? (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-6 h-6"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 4.5v15m12-15v15" />
+          </svg>
+        ) : (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="w-6 h-6"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M5.25 5.25l13.5 6.75-13.5 6.75V5.25z"
+            />
+          </svg>
+        )}
+      </button>
+
+      {/* الموجة الصوتية */}
+      <div className="flex-1 relative h-6">
+        <canvas ref={canvasRef} width="300" height="24" className="w-full h-full"></canvas>
       </div>
 
       {/* الوقت */}
-      <div className="w-full flex justify-between text-sm text-gray-700">
-        <span>{new Date(currentTime * 1000).toISOString().substr(14, 5)}</span>
-        <span>{new Date(duration * 1000).toISOString().substr(14, 5)}</span>
-      </div>
-
-      {/* أدوات التحكم */}
-      <div className="flex items-center space-x-4">
-        <button
-          onClick={() => (audioRef.current.currentTime -= 5)}
-          className="text-2xl text-gray-700 hover:text-gray-900"
-        >
-          ⏪
-        </button>
-        <button
-          onClick={togglePlay}
-          className="text-3xl text-gray-700 hover:text-gray-900"
-        >
-          {isPlaying ? "⏸️" : "▶️"}
-        </button>
-        <button
-          onClick={() => (audioRef.current.currentTime += 5)}
-          className="text-2xl text-gray-700 hover:text-gray-900"
-        >
-          ⏩
-        </button>
-      </div>
-
-      {/* التحكم في الصوت */}
-      <div className="flex items-center space-x-2 w-full">
-        <span className="text-gray-700">🔊</span>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={volume}
-          onChange={handleVolumeChange}
-          className="w-full"
-        />
+      <div className="text-sm text-gray-600">
+        {new Date(currentTime * 1000).toISOString().substr(14, 5)} /{" "}
+        {new Date(duration * 1000).toISOString().substr(14, 5)}
       </div>
 
       {/* عنصر الصوت */}
