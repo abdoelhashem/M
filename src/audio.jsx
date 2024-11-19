@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import RecordRTC from 'recordrtc';
 import axios from 'axios';
+import AudioPlayer from './componants/AudioPlayer';
 
 const VoiceRecorder = ({publicUrl,setPublicUrl}) => {
   const [isRecording, setIsRecording] = useState(false);
@@ -103,7 +104,7 @@ const VoiceRecorder = ({publicUrl,setPublicUrl}) => {
       {audioFile && (
         <div>
           <h4>الرسالة الصوتية:</h4>
-          <audio src={URL.createObjectURL(audioFile)} controls />
+          <AudioPlayer src={URL.createObjectURL(audioFile)} />
         </div>
       )}
 
