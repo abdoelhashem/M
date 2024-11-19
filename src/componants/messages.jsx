@@ -6,10 +6,15 @@ function Messages() {
     const targetSectionRef = useRef(null);
 
   useEffect(() => {
-    // التمرير إلى القسم المحدد عند تحميل الصفحة
-    if (targetSectionRef.current) {
-      targetSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    // إضافة تأخير قدره ثانيتين قبل التمرير
+    const timer = setTimeout(() => {
+      if (targetSectionRef.current) {
+        targetSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 2000); // 2000 ميلي ثانية = 2 ثانية
+
+    // تنظيف التايمر إذا تم إلغاء المكون أو تغييره
+    return () => clearTimeout(timer);
   }, []); // سيتم تنفيذ هذا التأثير عند تحميل الصفحة فقط
 
     useEffect(() => {
