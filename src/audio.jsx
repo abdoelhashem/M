@@ -52,6 +52,7 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
     // إذا كان هناك تدفق صوت سابق، قم بإيقافه
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
 
     const stream = await requestAudioPermission();
@@ -103,6 +104,12 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
       setAudioFile(blob);
       setShowUploadOptions(true);
     });
+
+    // إيقاف تدفق الصوت بشكل صحيح
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null; // إعادة تعيين التدفق
+    }
   };
 
   const uploadToCloudinary = async (blob) => {
@@ -137,7 +144,12 @@ const VoiceRecorder = ({ publicUrl, setPublicUrl }) => {
     setShowUploadOptions(false);
     setPublicUrl("");
     setErrorMessage("");
-    setIsRecording(false); // إعادة تعيين حالة التسجيل
+    setIsRecording(false);
+    // إعادة تعيين جميع المتغيرات ذات الصلة بتدفق الصوت
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
   };
 
   return (
