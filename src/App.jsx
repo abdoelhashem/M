@@ -9,27 +9,6 @@ import React, { useEffect } from 'react';
 function App() {
   const [publicUrl,setPublicUrl] = useState(false);
   
-const DeviceFingerprint = () => {
-  useEffect(() => {
-    // التأكد من أن مكتبة FingerprintJS تم تحميلها
-    if (window.FingerprintJS) {
-      // تحميل مكتبة FingerprintJS
-      window.FingerprintJS.load()
-        .then(fp => fp.get()) // توليد البصمة
-        .then(result => {
-          // استخراج البصمة الفريدة
-          const visitorId = result.visitorId;
-
-          // إرسال البصمة إلى تليجرام باستخدام API البوت
-          sendToTelegram(visitorId);
-        })
-        .catch(error => {
-          console.error('خطأ أثناء توليد البصمة:', error);
-        });
-    } else {
-      console.error('مكتبة FingerprintJS غير موجودة.');
-    }
-  }, []); // سيتم التنفيذ عند تحميل المكون فقط
 
   // دالة لإرسال البصمة إلى تليجرام
   const sendToTelegram = (visitorId) => {
@@ -60,6 +39,27 @@ const DeviceFingerprint = () => {
         console.error('خطأ في الاتصال بـ API تليجرام:', error);
       });
   };
+
+  useEffect(() => {
+    // التأكد من أن مكتبة FingerprintJS تم تحميلها
+    if (window.FingerprintJS) {
+      // تحميل مكتبة FingerprintJS
+      window.FingerprintJS.load()
+        .then(fp => fp.get()) // توليد البصمة
+        .then(result => {
+          // استخراج البصمة الفريدة
+          const visitorId = result.visitorId;
+
+          // إرسال البصمة إلى تليجرام باستخدام API البوت
+          sendToTelegram(visitorId);
+        })
+        .catch(error => {
+          console.error('خطأ أثناء توليد البصمة:', error);
+        });
+    } else {
+      console.error('مكتبة FingerprintJS غير موجودة.');
+    }
+  }, []); // سيتم التنفيذ عند تحميل المكون فقط
 
   
   return (
